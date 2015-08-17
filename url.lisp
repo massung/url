@@ -66,7 +66,7 @@
 ;;; ----------------------------------------------------
 
 (defconstant +url-format+
-  "~@[~(~a~)://~]~@[~{~a:~a~}@~]~a~:[~*~;:~a~]~a~@[?~a~]~@[#~a~]")
+  "~@[~(~a~)://~]~@[~{~a:~a~}@~]~a~:[:~a~;~*~]~a~@[?~a~]~@[#~a~]")
 
 ;;; ----------------------------------------------------
 
@@ -135,17 +135,17 @@
 
 (defparser url-parser
   "Parse a URL. Return initargs for make-instance."
-  (.let* ((scheme   (.opt (.is :scheme) "http"))
-          (auth     (.opt (.is :auth)))
+  (.let* ((scheme   (.opt "http" (.is :scheme)))
+          (auth     (.opt nil (.is :auth)))
 
           ;; required hostname
           (domain   (.is :domain))
 
           ;; optional port, path, query, and anchor fragment
-          (port     (.opt (.is :port) (url-port-lookup scheme)))
-          (path     (.opt (.is :path) "/"))
-          (query    (.opt (.is :query)))
-          (fragment (.opt (.is :fragment))))
+          (port     (.opt (url-port-lookup scheme) (.is :port)))
+          (path     (.opt "/" (.is :path)))
+          (query    (.opt nil (.is :query)))
+          (fragment (.opt nil (.is :fragment))))
 
     ;; return an initargs spec for a make-instance 'url call
     (.ret (list :scheme scheme
@@ -196,13 +196,13 @@
   "Output a URL to a stream or string."
   (with-slots (scheme auth domain port path query fragment)
       url
-    (let ((show-port-p (eql port (url-port-lookup scheme))))
+    (let ((hide-port-p (eql port (url-port-lookup scheme))))
       (format stream
               +url-format+
               scheme
               auth
               domain
-              show-port-p
+              hide-port-p
               port
               path
               query
