@@ -83,7 +83,7 @@
 
 ;;; ----------------------------------------------------
 
-(deflexer url-lexer (s)
+(define-lexer url-lexer (s)
 
   ;; URL scheme
   ("^(%a+)://"                (values :scheme $1))
@@ -133,7 +133,7 @@
 
 ;;; ----------------------------------------------------
 
-(defparser url-parser
+(define-parser url-parser
   "Parse a URL. Return initargs for make-instance."
   (.let* ((scheme   (.opt "http" (.is :scheme)))
           (auth     (.opt nil (.is :auth)))
