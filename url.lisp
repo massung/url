@@ -66,7 +66,7 @@
 ;;; ----------------------------------------------------
 
 (defconstant +url-format+
-  "~@[~(~a~)://~]~@[~{~a:~a~}@~]~a~:[:~a~;~*~]~a~@[?~a~]~@[#~a~]")
+  "~@[~(~a~)://~]~@[~{~a:~a~}@~]~@[~a~]~:[:~a~;~*~]~a~@[?~a~]~@[#~a~]")
 
 ;;; ----------------------------------------------------
 
@@ -135,26 +135,39 @@
 
 (define-parser url-parser
   "Parse a URL. Return initargs for make-instance."
-  (.let* ((scheme   (.opt "http" (.is :scheme)))
-          (auth     (.opt nil (.is :auth)))
+  (.let (scheme (.opt "http" (.is :scheme)))
+    (if (string= scheme "http")
+        (.let* ((auth     (.opt nil (.is :auth)))
 
-          ;; required hostname
-          (domain   (.is :domain))
+                ;; required hostname
+                (domain   (.is :domain))
 
-          ;; optional port, path, query, and anchor fragment
-          (port     (.opt (url-port-lookup scheme) (.is :port)))
-          (path     (.opt "/" (.is :path)))
-          (query    (.opt nil (.is :query)))
-          (fragment (.opt nil (.is :fragment))))
+                ;; optional port, path, query, and anchor fragment
+                (port     (.opt (url-port-lookup scheme) (.is :port)))
+                (path     (.opt "/" (.is :path)))
+                (query    (.opt nil (.is :query)))
+                (fragment (.opt nil (.is :fragment))))
 
-    ;; return an initargs spec for a make-instance 'url call
-    (.ret (list :scheme scheme
-                :auth auth
-                :domain domain
-                :port port
-                :path path
-                :query query
-                :fragment fragment))))
+          ;; return an initargs spec for a make-instance 'url call
+          (.ret (list :scheme scheme
+                      :auth auth
+                      :domain domain
+                      :port port
+                      :path path
+                      :query query
+                      :fragment fragment)))
+
+      ;; this is just a file on disk, parse the path
+      (.let* ((path     (.opt "/" (.is :path)))
+              (query    (.opt nil (.is :query)))
+              (fragment (.opt nil (.is :fragment))))
+        (.ret (list :scheme scheme
+                    :auth nil
+                    :domain nil
+                    :port nil
+                    :path path
+                    :query query
+                    :fragment fragment))))))
 
 ;;; ----------------------------------------------------
 
