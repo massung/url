@@ -136,35 +136,39 @@
 (define-parser url-parser
   "Parse a URL. Return initargs for make-instance."
   (.let (scheme (.opt "http" (.is :scheme)))
-    (if (string= scheme "http")
-        (.let* ((auth     (.opt nil (.is :auth)))
+    (if (string= scheme "file")
 
-                ;; required hostname
-                (domain   (.is :domain))
+        ;; this is just a file on disk, parse the path
+        (.let* ((path     (.is :path))
 
-                ;; optional port, path, query, and anchor fragment
-                (port     (.opt (url-port-lookup scheme) (.is :port)))
-                (path     (.opt "/" (.is :path)))
+                ;; optional query and fragment
                 (query    (.opt nil (.is :query)))
                 (fragment (.opt nil (.is :fragment))))
-
-          ;; return an initargs spec for a make-instance 'url call
           (.ret (list :scheme scheme
-                      :auth auth
-                      :domain domain
-                      :port port
+                      :auth nil
+                      :domain nil
+                      :port nil
                       :path path
                       :query query
                       :fragment fragment)))
 
-      ;; this is just a file on disk, parse the path
-      (.let* ((path     (.opt "/" (.is :path)))
+      ;; full url to an external resource
+      (.let* ((auth     (.opt nil (.is :auth)))
+
+              ;; required hostname
+              (domain   (.is :domain))
+
+              ;; optional port, path, query, and anchor fragment
+              (port     (.opt (url-port-lookup scheme) (.is :port)))
+              (path     (.opt "/" (.is :path)))
               (query    (.opt nil (.is :query)))
               (fragment (.opt nil (.is :fragment))))
+
+        ;; return an initargs spec for a make-instance 'url call
         (.ret (list :scheme scheme
-                    :auth nil
-                    :domain nil
-                    :port nil
+                    :auth auth
+                    :domain domain
+                    :port port
                     :path path
                     :query query
                     :fragment fragment))))))
