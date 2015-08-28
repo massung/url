@@ -26,6 +26,9 @@
    #:url-parse
    #:url-copy
 
+   ;; compare urls
+   #:url-equal
+
    ;; encode/decode functions
    #:url-encode
    #:url-decode
@@ -230,6 +233,25 @@
 (defun escape-char-p (c)
   "T if a character needs to be escaped in a URL."
   (not (or (alphanumericp c) (find c "-._~"))))
+
+;;; ----------------------------------------------------
+
+(defun url-equal (a b)
+  "T if A and B resolve to the same URL, ignoring query and fragment."
+  (or (eq a b)
+
+      ;; all components of the URL must be equalp as well
+      (and (equal (url-scheme a) (url-scheme b))
+           (equal (url-auth a) (url-auth b))
+           (equal (url-domain a) (url-domain b))
+           (equal (url-port a) (url-port b))
+           (equal (url-path a) (url-path b))
+           (equal (url-fragment a) (url-fragment b))
+
+           ;; query parameters can be in any order, but all must match
+           (let ((qa (parse-query-string (url-query a)))
+                 (qb (parse-query-string (url-query b))))
+             (null (set-difference qa qb :test #'equal))))))
 
 ;;; ----------------------------------------------------
 
