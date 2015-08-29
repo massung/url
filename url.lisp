@@ -33,9 +33,6 @@
    #:url-encode
    #:url-decode
 
-   ;; printing urls
-   #:url-format
-
    ;; port service functions
    #:url-port-lookup
 
@@ -75,8 +72,19 @@
 
 (defmethod print-object ((url url) stream)
   "Output a URL to a stream."
-  (print-unreadable-object (url stream :type t)
-    (url-format url stream)))
+  (with-slots (scheme auth domain port path query fragment)
+      url
+    (let ((hide-port-p (eql port (url-port-lookup scheme))))
+      (format stream
+              +url-format+
+              scheme
+              auth
+              domain
+              hide-port-p
+              port
+              path
+              query
+              fragment))))
 
 ;;; ----------------------------------------------------
 
@@ -209,24 +217,6 @@
                            :query (url-query url)
                            :fragment (url-fragment url))))
     (apply #'url-parse url initargs)))
-
-;;; ----------------------------------------------------
-
-(defun url-format (url &optional stream)
-  "Output a URL to a stream or string."
-  (with-slots (scheme auth domain port path query fragment)
-      url
-    (let ((hide-port-p (eql port (url-port-lookup scheme))))
-      (format stream
-              +url-format+
-              scheme
-              auth
-              domain
-              hide-port-p
-              port
-              path
-              query
-              fragment))))
 
 ;;; ----------------------------------------------------
 

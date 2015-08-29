@@ -11,23 +11,21 @@ Parsing a URL is as simple as using `url-parse`:
 The *initargs* allows you to override any of the initargs of the `url` class that would normally have been set by `url-parse`.
 
     CL-USER > (url-parse "google.com")
-    #<URL http://google.com/>
+    http://google.com/
+
+*Notice how the output is the URL and not formatted like a typical [unreadable object](http://www.lispworks.com/documentation/HyperSpec/Body/m_pr_unr.htm#print-unreadable-object). This is because you'll often want to output a URL to the end user. This way, you can use all Common Lisp functions to print a URL (format, print, princ, prin1, etc.) and see it plainly.
 
     CL-USER > (url-parse "google.com" :query "q=common+lisp")
-    #<URL http://google.com/?s=common+lisp>
+    http://google.com/?s=common+lisp
 
 Once you have a URL, you can copy it, using the exact same *initargs* to generate a new URL that's the same, only with changes...
 
     CL-USER > (url-copy * :scheme "https")
-    #<URL https://google.com/?s=common+lisp>
+    https://google.com/?s=common+lisp
 
 A helpful macro to work with URLs is the `with-url` macro. You can pass it a string or another URL, and modify the URL passed in.
 
     (with-url (var url-form &rest initargs) &body body)
-
-You can output the URL to a stream with `url-format`.
-
-    (url-format url &optional stream)
 
 Encoding and decoding URL strings can be done with the `url-encode` and `url-decode` functions:
 
