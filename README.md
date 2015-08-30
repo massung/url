@@ -13,10 +13,10 @@ The *initargs* allows you to override any of the initargs of the `url` class tha
     CL-USER > (url-parse "google.com")
     http://google.com/
 
-*Notice how the output is the URL and not formatted like a typical [unreadable object](http://www.lispworks.com/documentation/HyperSpec/Body/m_pr_unr.htm#print-unreadable-object). This is because you'll often want to output a URL to the end user. This way, you can use all Common Lisp functions to print a URL (format, print, princ, prin1, etc.) and see it plainly.
+*Notice how the output is the URL and not formatted like a typical [unreadable object](http://www.lispworks.com/documentation/HyperSpec/Body/m_pr_unr.htm#print-unreadable-object). This is because you'll often want to output a URL to the end user. This way, you can use all Common Lisp functions to print a URL (format, print, princ, prin1, etc.) and see it plainly.*
 
-    CL-USER > (url-parse "google.com" :query "q=common+lisp")
-    http://google.com/?s=common+lisp
+    CL-USER > (url-parse "google.com" :path "/index.html")
+    http://google.com/index.html
 
 Once you have a URL, you can create a copy using `url-parse` as well, using the exact same *initargs* to generate a new URL that's the same, only with changes...
 
@@ -46,6 +46,8 @@ These will handle escaping of characters properly so they can be used within a U
     CL-USER > (url-decode *)
     "Common Lisp Rocks!"
 
+*Note: In addition to `url-encode`, there is also `url-format`, which allows you not only to encode to a stream, but is built for use inside of `format` with `~/`.*
+
 You can also construct and deconstruct query strings in URLs to and from associative lists.
 
     CL-USER > (parse-query-string "q=common+lisp&rocks=true")
@@ -53,6 +55,8 @@ You can also construct and deconstruct query strings in URLs to and from associa
 
     CL-USER > (make-query-string *)
     "q=common%20lisp&rocks=true"
+
+*Note: when constructing a URL via `make-instance` or `url-parse`, the *query* initarg requires an associative list of key/value pairs. If you have the query string, use `parse-query-string` to get the associative list.*
 
 The URL accessor functions are:
 

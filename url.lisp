@@ -286,14 +286,14 @@
 
 ;;; ----------------------------------------------------
 
-(defun url-format (stream string &optional colonp atp &rest args)
+(defun url-format (stream form &optional colonp atp &rest args)
   "URL encode a form into a stream."
   (declare (ignore colonp atp args))
   (flet ((encode-char (c)
            (if (escape-char-p c)
                (format stream "%~16,2,'0r" (char-code c))
              (princ c stream))))
-    (map nil #'encode-char string)))
+    (map nil #'encode-char (princ-to-string form))))
 
 ;;; ----------------------------------------------------
 
