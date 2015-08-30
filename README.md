@@ -18,14 +18,20 @@ The *initargs* allows you to override any of the initargs of the `url` class tha
     CL-USER > (url-parse "google.com" :query "q=common+lisp")
     http://google.com/?s=common+lisp
 
-Once you have a URL, you can copy it, using the exact same *initargs* to generate a new URL that's the same, only with changes...
+Once you have a URL, you can create a copy using `url-parse` as well, using the exact same *initargs* to generate a new URL that's the same, only with changes...
 
-    CL-USER > (url-copy * :scheme "https")
+    CL-USER > (url-parse * :scheme "https")
     https://google.com/?s=common+lisp
 
-A helpful macro to work with URLs is the `with-url` macro. You can pass it a string or another URL, and modify the URL passed in.
+A helpful macro to work with URLs is the `with-url` macro. It's simply a wrapper around `url-parse`.
 
     (with-url (var url-form &rest initargs) &body body)
+
+URLs can be compared with `url-equal`. It returns T if all the slots of the URL are always `equal`: scheme, auth, domain, port, path, query, and fragment. For the query parameters, the order of them needn't be in the same order. They also can be encoded differently.
+
+    CL-USER > (url-equal (url-parse "www.foo.com/?a=1&b=this+that")
+                         (url-parse "www.foo.com/?b=this%20that&a=1"))
+    T
 
 Encoding and decoding URL strings can be done with the `url-encode` and `url-decode` functions:
 

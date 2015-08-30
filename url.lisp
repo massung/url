@@ -22,11 +22,8 @@
   (:export
    #:with-url
 
-   ;; url construction
+   ;; url construction and comparing
    #:url-parse
-   #:url-copy
-
-   ;; compare urls
    #:url-equal
 
    ;; encode/decode functions
@@ -188,35 +185,35 @@
 
 (defmacro with-url ((var url &rest initargs) &body body)
   "Construct a URL from a string and execute a body."
-  `(let ((,var (url-copy ,url ,@initargs)))
+  `(let ((,var (url-parse ,url ,@initargs)))
      (progn ,@body)))
 
 ;;; ----------------------------------------------------
 
-(defun url-parse (string &rest initargs)
-  "Parse a URL object from a string."
-  (with-lexer (lexer 'url-lexer string)
-    (with-token-reader (next-token lexer)
-      (let ((spec (parse 'url-parser next-token)))
-        (when spec
-          (apply 'make-instance 'url (append initargs spec)))))))
+(defun url-parse (url-form &rest initargs)
+  "Parse a URL object from a string or another URL."
+  (etypecase url-form
 
-;;; ----------------------------------------------------
+    ;; create a new url, allowing to override existing slots
+    (url (apply 'make-instance
+                'url
+                (append initargs
+                        (list :scheme (url-scheme url-form)
+                              :auth (url-auth url-form)
+                              :domain (url-domain url-form)
+                              :port (url-port url-form)
+                              :path (url-path url-form)
+                              :query (url-query url-form)
+                              :fragment (url-fragment url-form)))))
 
-(defun url-copy (url &rest initargs &key &allow-other-keys)
-  "Copy a URL, but allow changes to instance members."
-  (if (typep url 'url)
-      (apply 'make-instance
-             'url
-             (append initargs
-                     (list :scheme (url-scheme url)
-                           :auth (url-auth url)
-                           :domain (url-domain url)
-                           :port (url-port url)
-                           :path (url-path url)
-                           :query (url-query url)
-                           :fragment (url-fragment url))))
-    (apply #'url-parse url initargs)))
+    ;; parse the URL from a string
+    (string (with-lexer (lexer 'url-lexer url-form)
+              (with-token-reader (next-token lexer)
+                (let ((spec (parse 'url-parser next-token)))
+                  (when spec
+                    (apply 'make-instance
+                           'url
+                           (append initargs spec)))))))))
 
 ;;; ----------------------------------------------------
 
