@@ -33,6 +33,9 @@
    ;; port service functions
    #:url-port-lookup
 
+   ;; url encoding into a stream
+   #:url-format
+
    ;; query string functions
    #:make-query-string
    #:parse-query-string
@@ -63,7 +66,7 @@
 ;;; ----------------------------------------------------
 
 (defconstant +url-format+
-  "~@[~(~a~)://~]~@[~{~a:~a~}@~]~@[~a~]~:[:~a~;~*~]~a~:[~1*~;?~a~]~@[#~a~]")
+  "~@[~(~a~)://~]~@[~{~a:~a~}@~]~@[~a~]~:[:~a~;~*~]~a~:{~a=~/url:url-format/~:^&~}~@[#~a~]")
 
 ;;; ----------------------------------------------------
 
@@ -81,7 +84,6 @@
               port
               path
               query
-              (make-query-string query)
               fragment))))
 
 ;;; ----------------------------------------------------
@@ -284,23 +286,20 @@
 
 ;;; ----------------------------------------------------
 
+(defun url-format (stream string &optional colonp atp &rest args)
+  "URL encode a form into a stream."
+  (declare (ignore colonp atp args))
+  (flet ((encode-char (c)
+           (if (escape-char-p c)
+               (format stream "%~16,2,'0r" (char-code c))
+             (princ c stream))))
+    (map nil #'encode-char string)))
+
+;;; ----------------------------------------------------
+
 (defun make-query-string (a-list &optional stream)
   "Build a k=v&.. string from an a-list, properly url-encoded."
-  (let ((qs (if stream
-                stream
-              (make-string-output-stream))))
-    (do ()
-        ((null a-list)
-         (unless stream
-           (get-output-stream-string qs)))
-
-      ;; split the k/v pair, the value is optional
-      (destructuring-bind (k &optional v)
-          (pop a-list)
-
-        ;; always encode the value, but don't always output it
-        (let ((qv (url-encode (princ-to-string v))))
-          (format qs "~a~:[~1*~;=~a~]~:[~;&~]" k v qv a-list))))))
+  (format stream "~:{~a=~/url:url-format/~:^&~}" a-list))
 
 ;;; ----------------------------------------------------
 
