@@ -63,7 +63,7 @@
 ;;; ----------------------------------------------------
 
 (defconstant +url-format+
-  "~@[~(~a~)://~]~@[~{~a:~a~}@~]~@[~a~]~:[:~a~;~*~]~a~@[?~a~]~@[#~a~]")
+  "~@[~(~a~)://~]~@[~{~a:~a~}@~]~@[~a~]~:[:~a~;~*~]~a~:[~1*~;?~a~]~@[#~a~]")
 
 ;;; ----------------------------------------------------
 
@@ -81,6 +81,7 @@
               port
               path
               query
+              (make-query-string query)
               fragment))))
 
 ;;; ----------------------------------------------------
@@ -149,8 +150,8 @@
         ;; this is just a file on disk, parse the path
         (.let* ((path     (.is :path))
 
-                ;; optional query and fragment
-                (query    (.opt nil (.is :query)))
+                ;; optional query
+                (query    (.opt nil 'query-parser))
                 (fragment (.opt nil (.is :fragment))))
           (.ret (list :scheme scheme
                       :auth nil
@@ -169,7 +170,7 @@
               ;; optional port, path, query, and anchor fragment
               (port     (.opt (url-port-lookup scheme) (.is :port)))
               (path     (.opt "/" (.is :path)))
-              (query    (.opt nil (.is :query)))
+              (query    (.opt nil 'query-parser))
               (fragment (.opt nil (.is :fragment))))
 
         ;; return an initargs spec for a make-instance 'url call
@@ -180,6 +181,13 @@
                     :path path
                     :query query
                     :fragment fragment))))))
+
+;;; ----------------------------------------------------
+
+(define-parser query-parser
+  "Parse a query string and return the a-list of k/v pairs."
+  (.let (query (.is :query))
+    (.ret (parse-query-string query))))
 
 ;;; ----------------------------------------------------
 
@@ -236,8 +244,8 @@
            (equal (url-fragment a) (url-fragment b))
 
            ;; query parameters can be in any order, but all must match
-           (let ((qa (parse-query-string (url-query a)))
-                 (qb (parse-query-string (url-query b))))
+           (let ((qa (url-query a))
+                 (qb (url-query b)))
              (null (set-difference qa qb :test #'equal))))))
 
 ;;; ----------------------------------------------------
