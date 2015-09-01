@@ -65,8 +65,17 @@
 
 ;;; ----------------------------------------------------
 
+(defmethod initialize-instance :after ((url url) &key relative-url)
+  "If a relative-url is passed in, allow it's use."
+  (when relative-url
+    (dolist (slot '(scheme domain port query fragment))
+      (unless (slot-value url slot)
+        (setf (slot-value url slot) (slot-value relative-url slot))))))
+
+;;; ----------------------------------------------------
+
 (defconstant +url-format+
-  "~@[~(~a~)://~]~@[~{~a:~a~}@~]~@[~a~]~:[:~a~;~*~]~a~@[?~:{~a=~/url:url-format/~:^&~}~]~@[#~a~]")
+  "~@[~(~a~)://~]~@[~{~a:~a~}@~]~@[~a~]~:[:~a~;~*~]~a~@[?~:{~a~@[=~/url:url-format/~]~:^&~}~]~@[#~a~]")
 
 ;;; ----------------------------------------------------
 
@@ -88,12 +97,6 @@
 
 ;;; ----------------------------------------------------
 
-(defmethod (setf url-scheme) :after (scheme (url url))
-  "After changing schemes, change the port, too."
-  (setf (url-port url) (url-port-lookup scheme)))
-
-;;; ----------------------------------------------------
-
 (define-lexer url-lexer (s)
 
   ;; URL scheme
@@ -108,6 +111,9 @@
   ;; port/service number
   (":(%d+)"                   (values :port (parse-integer $1)))
 
+  ;; path to local resource
+  ("^/[^?#]*"                 (values :local-path $$))
+
   ;; path to resource on server
   ("/[^?#]*"                  (values :path $$))
 
@@ -120,8 +126,7 @@
 ;;; ----------------------------------------------------
 
 (defparameter *url-ports*
-  '(("file"   nil)
-    ("ftp"    20)
+  '(("ftp"    20)
     ("ssh"    22)
     ("telnet" 23)
     ("smtp"   25)
@@ -137,52 +142,54 @@
 
 (defun url-port-lookup (scheme &optional (default-port 80))
   "Lookup a port for a given scheme."
-  (let ((port (assoc scheme *url-ports* :test 'string-equal)))
-    (if (null port)
-        default-port
-      (second port))))
+  (when scheme
+    (let ((port (assoc scheme *url-ports* :test 'string-equal)))
+      (if (null port)
+          default-port
+        (second port)))))
 
 ;;; ----------------------------------------------------
 
 (define-parser url-parser
   "Parse a URL. Return initargs for make-instance."
-  (.let (scheme (.opt "http" (.is :scheme)))
-    (if (string= scheme "file")
+  (.or (.let* ((path (.is :local-path))
 
-        ;; this is just a file on disk, parse the path
-        (.let* ((path     (.is :path))
+               ;; optional query
+               (query    (.opt nil 'query-parser))
+               (fragment (.opt nil (.is :fragment))))
 
-                ;; optional query
-                (query    (.opt nil 'query-parser))
-                (fragment (.opt nil (.is :fragment))))
-          (.ret (list :scheme scheme
-                      :auth nil
-                      :domain nil
-                      :port nil
-                      :path path
-                      :query query
-                      :fragment fragment)))
+         ;; local site resource
+         (.ret (list :scheme nil
+                     :auth nil
+                     :domain nil
+                     :port nil
+                     :path path
+                     :query query
+                     :fragment fragment)))
 
-      ;; full url to an external resource
-      (.let* ((auth     (.opt nil (.is :auth)))
+       ;; external site resource
+       (.let* ((scheme   (.opt "http" (.is :scheme)))
 
-              ;; required hostname
-              (domain   (.is :domain))
+               ;; optional basic auth
+               (auth     (.opt nil (.is :auth)))
 
-              ;; optional port, path, query, and anchor fragment
-              (port     (.opt (url-port-lookup scheme) (.is :port)))
-              (path     (.opt "/" (.is :path)))
-              (query    (.opt nil 'query-parser))
-              (fragment (.opt nil (.is :fragment))))
+               ;; required hostname
+               (domain   (.is :domain))
 
-        ;; return an initargs spec for a make-instance 'url call
-        (.ret (list :scheme scheme
-                    :auth auth
-                    :domain domain
-                    :port port
-                    :path path
-                    :query query
-                    :fragment fragment))))))
+               ;; optional port, path, query, and anchor fragment
+               (port     (.opt (url-port-lookup scheme) (.is :port)))
+               (path     (.opt "/" (.is :path)))
+               (query    (.opt nil 'query-parser))
+               (fragment (.opt nil (.is :fragment))))
+
+         ;; return an initargs spec for a make-instance 'url call
+         (.ret (list :scheme scheme
+                     :auth auth
+                     :domain domain
+                     :port port
+                     :path path
+                     :query query
+                     :fragment fragment)))))
 
 ;;; ----------------------------------------------------
 
@@ -286,20 +293,21 @@
 
 ;;; ----------------------------------------------------
 
-(defun url-format (stream form &optional colonp atp &rest args)
+(defun url-format (stream &optional form colonp atp &rest args)
   "URL encode a form into a stream."
   (declare (ignore colonp atp args))
   (flet ((encode-char (c)
            (if (escape-char-p c)
                (format stream "%~16,2,'0r" (char-code c))
              (princ c stream))))
-    (map nil #'encode-char (princ-to-string form))))
+    (when form
+      (map nil #'encode-char (princ-to-string form)))))
 
 ;;; ----------------------------------------------------
 
 (defun make-query-string (a-list &optional stream)
   "Build a k=v&.. string from an a-list, properly url-encoded."
-  (format stream "~:{~a=~/url:url-format/~:^&~}" a-list))
+  (format stream "~:{~a~@[=~/url:url-format/~]~:^&~}" a-list))
 
 ;;; ----------------------------------------------------
 
@@ -316,7 +324,7 @@
      collect (if m
                  (let ((v (url-decode (subseq qs (1+ m) n))))
                    (list (subseq qs p m) v))
-               (list (subseq qs p n)))
+               (list (subseq qs p n) nil))
 
      ;; stop when no more keys
      while n
