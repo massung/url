@@ -18,7 +18,7 @@
 ;;;;
 
 (defpackage :url
-  (:use :cl :lexer :parse)
+  (:use :cl :base64 :lexer :parse)
   (:export
    #:with-url
 
@@ -35,6 +35,10 @@
 
    ;; url encoding into a stream
    #:url-format
+
+   ;; url functions for HTTP requests
+   #:url-request-path
+   #:url-basic-auth
 
    ;; query string functions
    #:make-query-string
@@ -301,6 +305,23 @@
              (princ c stream))))
     (when form
       (map nil #'encode-char (princ-to-string form)))))
+
+;;; ----------------------------------------------------
+
+(defun url-request-path (url)
+  "Returns the path?query#fragment for an HTTP request."
+  (format nil "~a~@[?~:{~a~@[=~/url:url-format/~]~:^&~}~]~@[#~a~]"
+          (url-path url)
+          (url-query url)
+          (url-fragment url)))
+
+;;; ----------------------------------------------------
+
+(defun url-basic-auth (url)
+  "Create the value for the Authorization header."
+  (when (url-auth url)
+    (let ((auth-string (format nil "~{~a:~a~}" (url-auth url))))
+      (format nil "Basic ~a" (base64-encode auth-string)))))
 
 ;;; ----------------------------------------------------
 
