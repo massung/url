@@ -44,6 +44,9 @@
    #:make-query-string
    #:parse-query-string
 
+   ;; query parameter methods
+   #:url-query-param
+
    ;; url accessors
    #:url-scheme
    #:url-auth
@@ -351,3 +354,25 @@
 
      ;; offset to the next k/v pair
      do (setf p (1+ n))))
+
+;;; ----------------------------------------------------
+
+(defun url-query-param (url param)
+  "Lookup the param in the query of a URL via assoc. Return the value."
+  (second (assoc param (url-query url) :test #'string-equal)))
+
+;;; ----------------------------------------------------
+
+(defun url-query-param-set (url param value)
+  "Add a new query parameter or update an existing one."
+  (prog1 value
+    (let ((q (assoc param (url-query url) :test #'string-equal)))
+      (if q
+          (rplacd q (list value))
+        (push (list param value) (url-query url))))))
+
+;;; ----------------------------------------------------
+
+(defsetf url-query-param (url param) (value)
+  "Lookup a param, update or push new query value."
+  `(url::url-query-param-set ,url ,param ,value))
