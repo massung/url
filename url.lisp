@@ -81,7 +81,7 @@
 
 ;;; ----------------------------------------------------
 
-(defconstant +url-format+ "~@[~(~a~)://~]~@[~{~a:~a~}@~]~@[~a~]~:[:~a~;~*~]~a~@[?~:{~a~@[=~/url:url-format/~]~:^&~}~]~@[#~a~]")
+(defparameter *url-format* "~@[~(~a~)://~]~@[~{~a:~a~}@~]~@[~a~]~:[:~a~;~*~]~a~@[?~:{~a~@[=~/url:url-format/~]~:^&~}~]~@[#~a~]")
 
 ;;; ----------------------------------------------------
 
@@ -91,7 +91,7 @@
       url
     (let ((hide-port-p (eql port (url-port-lookup scheme))))
       (format stream
-              +url-format+
+              *url-format*
               scheme
               auth
               domain
