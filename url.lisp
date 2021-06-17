@@ -73,7 +73,7 @@
 ;;; ----------------------------------------------------
 
 (defmethod initialize-instance :after ((url url) &key relative-url)
-  "If a relative-url is passed in, allow it's use."
+  "If a relative-url is passed in, allow its use."
   (when relative-url
     (dolist (slot '(scheme domain port query fragment))
       (unless (slot-value url slot)

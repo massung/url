@@ -1,6 +1,6 @@
 # URL parsing for Common Lisp
 
-This is a simple Universal Resource Locator (URL) parser package for Common Lisp. It depends on my [`re`](http://github.com/massung/re), [`lexer`](http://github.com/massung/lexer), and [`parse`](http://github.com/massung/parse) pacakges.
+This is a simple Universal Resource Locator (URL) parser package for Common Lisp. It depends on my [`re`](http://github.com/massung/re), [`lexer`](http://github.com/massung/lexer), [`parse`](http://github.com/massung/parse), and [`base64`](http://github.com/massung/base64) packages.
 
 ## Quickstart
 
@@ -27,7 +27,7 @@ A helpful macro to work with URLs is the `with-url` macro. It's simply a wrapper
 
     (with-url (var url-form &rest initargs) &body body)
 
-URLs can be compared with `url-equal`. It returns T if all the slots of the URL are always `equal`: scheme, auth, domain, port, path, query, and fragment. For the query parameters, the order of them needn't be in the same order. They also can be encoded differently.
+URLs can be compared with `url-equal`. It returns `T` if all the slots of the URL are always `equal`: scheme, auth, domain, port, path, query, and fragment. For the query parameters, the order of them needn't be in the same order. They also can be encoded differently.
 
     CL-USER > (url-equal (url-parse "www.foo.com/?a=1&b=this+that")
                          (url-parse "www.foo.com/?b=this%20that&a=1"))
@@ -56,7 +56,7 @@ You can also construct and deconstruct query strings in URLs to and from associa
     CL-USER > (make-query-string *)
     "q=common%20lisp&rocks=true"
 
-*Note: when constructing a URL via `make-instance` or `url-parse`, the *query* initarg requires an associative list of key/value pairs. If you have the query string, use `parse-query-string` to get the associative list.*
+*Note: When constructing a URL via `make-instance` or `url-parse`, the *query* initarg requires an associative list of key/value pairs. If you have the query string, use `parse-query-string` to get the associative list.*
 
 The URL accessor functions are:
 
